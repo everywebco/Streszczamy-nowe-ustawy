@@ -187,6 +187,10 @@ function DecisionPanel({ bill, decisionMarkdown }: { bill: Bill; decisionMarkdow
             Prezydent może ustawę podpisać, odmówić podpisu i przekazać ją Sejmowi do ponownego rozpatrzenia (weto)
             albo skierować ją do Trybunału Konstytucyjnego.
           </p>
+          <p className="decision__note">
+            Status sprawdzamy raz w tygodniu (w niedzielę), więc decyzja mogła już zapaść – aktualny stan zawsze
+            znajdziesz na stronie procesu w Sejmie.
+          </p>
         </section>
       );
     case "podpisana": {

@@ -1,4 +1,4 @@
-# Codziennie sprawdza w API Sejmu, czy pojawiły się nowe ustawy przekazane Prezydentowi do podpisu
+# Raz w tygodniu (w niedzielę) sprawdza w API Sejmu, czy pojawiły się nowe ustawy przekazane Prezydentowi do podpisu
 # oraz czy zmienił się status ustaw już śledzonych. Gdy coś się zmieni:
 #   1) zapisuje zmiany w content/ustawy/*.md (commit do repozytorium),
 #   2) uruchamia osobny pipeline "Streszczenia AI" (summarize-bills.yml) dla ustaw bez aktualnego streszczenia,
@@ -7,8 +7,8 @@ name: Sprawdzanie ustaw
 
 on:
   schedule:
-    # codziennie o 5:23 UTC (6:23 czasu zimowego / 7:23 letniego w Polsce)
-    - cron: "23 5 * * *"
+    # w każdą niedzielę o 5:23 UTC (6:23 czasu zimowego / 7:23 letniego w Polsce)
+    - cron: "23 5 * * 0"
   workflow_dispatch:
     inputs:
       lookback_days:
@@ -74,11 +74,11 @@ jobs:
         if: steps.check.outputs.ai_ids != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          HAS_API_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+          HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
           AI_IDS: ${{ steps.check.outputs.ai_ids }}
         run: |
-          if [ "$HAS_API_KEY" != "true" ]; then
-            echo "::warning::Brak sekretu ANTHROPIC_API_KEY – pomijam generowanie streszczeń."
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::warning::Brak sekretu CLAUDE_CODE_OAUTH_TOKEN (token subskrypcji z 'claude setup-token') – pomijam generowanie streszczeń."
             exit 0
           fi
           gh workflow run summarize-bills.yml --ref "$GITHUB_REF_NAME" -f bill_ids="$AI_IDS"

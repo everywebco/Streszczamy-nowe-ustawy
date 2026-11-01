@@ -20,8 +20,8 @@ export default function AboutPage() {
       <div className="prose">
         <h2>Skąd pochodzą dane</h2>
         <p>
-          Codziennie automat (GitHub Actions) odpytuje oficjalne <a href="https://api.sejm.gov.pl">API Sejmu RP</a> o
-          procesy legislacyjne zmienione w ostatnich dniach. Gdy ustawa trafia do Prezydenta, zapisujemy ją w
+          Raz w tygodniu, w niedzielę, automat (GitHub Actions) odpytuje oficjalne{" "}
+          <a href="https://api.sejm.gov.pl">API Sejmu RP</a> o procesy legislacyjne zmienione w ostatnich tygodniach. Gdy ustawa trafia do Prezydenta, zapisujemy ją w
           repozytorium jako plik Markdown – razem z przebiegiem prac, wynikiem głosowania i linkami do dokumentów.
           Przy każdym sprawdzeniu aktualizujemy też status ustaw, które czekają na decyzję.
         </p>
@@ -29,8 +29,9 @@ export default function AboutPage() {
         <h2>Jak powstają streszczenia</h2>
         <p>
           Gdy pojawi się nowa ustawa lub zmieni się jej sytuacja (np. Prezydent zgłosi weto), uruchamia się osobny
-          proces, który przekazuje modelowi AI Claude (Anthropic) tekst ustawy uchwalonej przez Sejm, a jeśli trzeba –
-          także uchwałę Senatu z poprawkami lub wniosek Prezydenta o ponowne rozpatrzenie ustawy. Model ma za zadanie:
+          proces, w którym Claude Code (narzędzie firmy Anthropic z modelem AI Claude) analizuje tekst ustawy
+          uchwalonej przez Sejm, a jeśli trzeba – także uchwałę Senatu z poprawkami lub wniosek Prezydenta o ponowne
+          rozpatrzenie ustawy. Model ma za zadanie:
         </p>
         <ul>
           <li>wyjaśnić prostym językiem, co ustawa zmienia i kogo dotyczy,</li>

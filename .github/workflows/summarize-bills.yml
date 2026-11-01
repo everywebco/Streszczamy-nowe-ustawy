@@ -1,11 +1,12 @@
-# Osobny pipeline: streszczenie i ocena ustaw przez model Claude (Anthropic API).
+# Osobny pipeline: streszczenie i ocena ustaw przez Claude Code, uwierzytelniony subskrypcją Claude (Pro/Max).
 # Uruchamiany automatycznie przez "Sprawdzanie ustaw", gdy pojawi się nowa ustawa lub zmieni się jej sytuacja
 # (np. weto Prezydenta), albo ręcznie z zakładki Actions.
 #
-# Wymaga sekretu repozytorium ANTHROPIC_API_KEY.
+# Wymaga sekretu repozytorium CLAUDE_CODE_OAUTH_TOKEN – tokenu z polecenia `claude setup-token`.
 # Opcjonalne zmienne repozytorium (Settings → Secrets and variables → Actions → Variables):
-#   ANTHROPIC_MODEL  – model (domyślnie claude-opus-5-5)
-#   ANTHROPIC_EFFORT – low | medium | high | xhigh | max (domyślnie high)
+#   CLAUDE_MODEL        – model lub alias, np. opus / sonnet (domyślnie: domyślny model Twojego planu)
+#   CLAUDE_EFFORT       – low | medium | high | xhigh | max (domyślnie high)
+#   CLAUDE_CODE_VERSION – wersja CLI Claude Code z npm (domyślnie kanał "stable")
 name: Streszczenia AI
 
 on:
@@ -20,7 +21,7 @@ on:
         type: boolean
         default: false
       max_bills:
-        description: "Maksymalna liczba ustaw w jednym uruchomieniu (kontrola kosztów)"
+        description: "Maksymalna liczba ustaw w jednym uruchomieniu (kolejne partie uruchamiają się automatycznie)"
         required: false
         default: "10"
 
@@ -34,9 +35,9 @@ concurrency:
 
 jobs:
   summarize:
-    name: Streszczenia i ocena (Claude)
+    name: Streszczenia i ocena (Claude Code)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v7
 
@@ -47,13 +48,20 @@ jobs:
 
       - run: npm ci
 
+      - name: Zainstaluj Claude Code
+        env:
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION || 'stable' }}
+        run: |
+          npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+          claude --version
+
       - name: Wygeneruj streszczenia
         id: summarize
         run: node scripts/summarize-bills.ts
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
-          ANTHROPIC_EFFORT: ${{ vars.ANTHROPIC_EFFORT }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          CLAUDE_EFFORT: ${{ vars.CLAUDE_EFFORT }}
           BILL_IDS: ${{ inputs.bill_ids }}
           FORCE: ${{ inputs.force }}
           MAX_BILLS: ${{ inputs.max_bills || '10' }}
@@ -89,6 +97,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run deploy.yml --ref "$GITHUB_REF_NAME"
+
+      # Jeśli zostały jeszcze ustawy, a ta partia przeszła bez błędów i bez limitu subskrypcji,
+      # uruchamiamy kolejną partię (nie czekamy do następnej niedzieli).
+      - name: Uruchom kolejną partię
+        if: >-
+          steps.commit.outputs.pushed == 'true' &&
+          steps.summarize.outputs.remaining != '0' &&
+          steps.summarize.outputs.failed == '0' &&
+          steps.summarize.outputs.limit_reached == 'false' &&
+          inputs.force != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BILL_IDS: ${{ inputs.bill_ids }}
+          MAX_BILLS: ${{ inputs.max_bills || '10' }}
+        run: gh workflow run summarize-bills.yml --ref "$GITHUB_REF_NAME" -f bill_ids="$BILL_IDS" -f max_bills="$MAX_BILLS"
 
       - name: Zgłoś błędy
         if: steps.summarize.outputs.failed != '' && steps.summarize.outputs.failed != '0'

@@ -1,4 +1,4 @@
-// Codzienny skrypt pipeline'u "check-bills":
+// Cotygodniowy skrypt pipeline'u "check-bills" (w każdą niedzielę, zob. .github/workflows/check-bills.yml):
 //  1. pobiera z API Sejmu procesy legislacyjne zmienione w ostatnich LOOKBACK_DAYS dniach,
 //  2. wybiera ustawy przekazane Prezydentowi do podpisu i zapisuje je w content/ustawy/<id>.md,
 //  3. ponownie sprawdza status już śledzonych ustaw, które nie mają jeszcze ostatecznego rozstrzygnięcia,

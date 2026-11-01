@@ -27,8 +27,8 @@ export default function HomePage() {
           <h1 className="hero__title">Co uchwalił Sejm i co z tym zrobi Prezydent?</h1>
           <p className="hero__lead">
             Proste streszczenia i wyważona ocena ustaw przekazanych Prezydentowi do podpisu. Śledzimy status każdej
-            ustawy, a gdy Prezydent zgłosi weto – wyjaśniamy, dlaczego. Dane aktualizujemy codziennie na podstawie
-            oficjalnego API Sejmu.
+            ustawy, a gdy Prezydent zgłosi weto – wyjaśniamy, dlaczego. Dane aktualizujemy raz w tygodniu, w niedzielę,
+            na podstawie oficjalnego API Sejmu.
           </p>
           <p className="hero__more">
             <Link href="/o-projekcie/">Jak powstają streszczenia →</Link>

@@ -1,0 +1,18 @@
+# zależności
+node_modules/
+
+# build Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# pliki tymczasowe pipeline'ów
+.cache/
+changes.json
+
+# system / edytory
+.DS_Store
+*.log
+.env*
+!.env.example

@@ -1,0 +1,61 @@
+# Buduje statyczną stronę Next.js (output: "export") i publikuje ją na GitHub Pages.
+# Uruchamia się po każdym pushu do gałęzi głównej oraz na żądanie pozostałych pipeline'ów
+# (commity wykonane przez GITHUB_TOKEN nie wywołują zdarzenia "push", dlatego są one uruchamiane jawnie).
+name: Publikacja strony
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Zbuduj stronę
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Skonfiguruj GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      - run: npm ci
+
+      - name: Zbuduj stronę (next build)
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          # np. "/Streszczamy-nowe-ustawy" dla https://<owner>.github.io/<repo>/, pusty przy własnej domenie
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}
+          NEXT_PUBLIC_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: out
+
+  deploy:
+    name: Opublikuj na GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

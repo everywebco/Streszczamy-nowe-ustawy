@@ -1,0 +1,97 @@
+# Osobny pipeline: streszczenie i ocena ustaw przez model Claude (Anthropic API).
+# Uruchamiany automatycznie przez "Sprawdzanie ustaw", gdy pojawi się nowa ustawa lub zmieni się jej sytuacja
+# (np. weto Prezydenta), albo ręcznie z zakładki Actions.
+#
+# Wymaga sekretu repozytorium ANTHROPIC_API_KEY.
+# Opcjonalne zmienne repozytorium (Settings → Secrets and variables → Actions → Variables):
+#   ANTHROPIC_MODEL  – model (domyślnie claude-opus-5-5)
+#   ANTHROPIC_EFFORT – low | medium | high | xhigh | max (domyślnie high)
+name: Streszczenia AI
+
+on:
+  workflow_dispatch:
+    inputs:
+      bill_ids:
+        description: "ID ustaw oddzielone przecinkami, np. 10-2271,10-316 (puste = wszystkie bez aktualnego streszczenia)"
+        required: false
+        default: ""
+      force:
+        description: "Wygeneruj ponownie, nawet jeśli streszczenie jest aktualne"
+        type: boolean
+        default: false
+      max_bills:
+        description: "Maksymalna liczba ustaw w jednym uruchomieniu (kontrola kosztów)"
+        required: false
+        default: "10"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: summarize-bills
+  cancel-in-progress: false
+
+jobs:
+  summarize:
+    name: Streszczenia i ocena (Claude)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Wygeneruj streszczenia
+        id: summarize
+        run: node scripts/summarize-bills.ts
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
+          ANTHROPIC_EFFORT: ${{ vars.ANTHROPIC_EFFORT }}
+          BILL_IDS: ${{ inputs.bill_ids }}
+          FORCE: ${{ inputs.force }}
+          MAX_BILLS: ${{ inputs.max_bills || '10' }}
+
+      # Zapisujemy także częściowy wynik, jeśli część ustaw się nie powiodła.
+      - name: Zapisz streszczenia w repozytorium
+        id: commit
+        if: always() && steps.summarize.outputs.done != '' && steps.summarize.outputs.done != '0'
+        env:
+          COMMIT_MESSAGE: ${{ steps.summarize.outputs.commit_message }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/ustawy
+          if git diff --cached --quiet; then
+            echo "Brak zmian do zapisania."
+            exit 0
+          fi
+          git commit -m "$COMMIT_MESSAGE"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME"; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt * 5))
+          done
+          echo "::error::Nie udało się wypchnąć zmian do repozytorium."
+          exit 1
+
+      - name: Uruchom publikację strony
+        if: always() && steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref "$GITHUB_REF_NAME"
+
+      - name: Zgłoś błędy
+        if: steps.summarize.outputs.failed != '' && steps.summarize.outputs.failed != '0'
+        run: |
+          echo "::error::Nie udało się przygotować streszczeń dla ${{ steps.summarize.outputs.failed }} ustaw – szczegóły w logu kroku 'Wygeneruj streszczenia'. Zostaną ponowione przy kolejnym sprawdzeniu."
+          exit 1

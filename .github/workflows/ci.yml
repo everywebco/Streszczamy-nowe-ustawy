@@ -1,0 +1,30 @@
+# Sprawdza typy i buduje stronę dla pull requestów.
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sprawdź typy (strona i skrypty)
+        run: npm run lint
+
+      - name: Zbuduj stronę
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

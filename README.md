@@ -50,6 +50,9 @@ Szczegóły:
 - **Kiedy uruchamia się AI** – gdy ustawa nie ma jeszcze streszczenia, gdy zmieniły się dokumenty źródłowe
   (np. Senat wniósł poprawki) albo gdy Prezydent zgłosił weto i w Sejmie pojawił się druk z uzasadnieniem.
   Sama zmiana statusu na „podpisana” nie wymaga ponownego streszczenia.
+- **Prosty język** – streszczenia mają być zrozumiałe dla przeciętnego obywatela. Zasady (krótkie zdania, codzienne
+  słowa, wyjaśnione skróty, bez numerów artykułów, konkretne daty i kwoty) są w `src/lib/plain-language.ts` – trafiają
+  do polecenia dla AI i są pokazane na stronie „Jak to działa”.
 - **Claude Code** – skrypt `scripts/summarize-bills.ts` uruchamia CLI Claude Code w trybie nieinteraktywnym
   (`claude -p`) z wymuszonym schematem odpowiedzi (`--json-schema`) i zamienia wynik na Markdown. Uwierzytelnienie
   odbywa się tokenem subskrypcji (`CLAUDE_CODE_OAUTH_TOKEN`), więc zużycie wlicza się w limity planu Pro/Max,

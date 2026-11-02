@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { StatusBadge } from "@/components/StatusBadge";
 import { REPO_URL } from "@/lib/format";
+import { PLAIN_LANGUAGE_READER, PLAIN_LANGUAGE_RULES } from "@/lib/plain-language";
 
 export const metadata: Metadata = {
   title: "Jak to działa",
@@ -41,6 +42,18 @@ export default function AboutPage() {
         <p>
           Streszczenia powstają automatycznie i mogą zawierać błędy lub uproszczenia. Przy każdej ustawie podajemy
           źródła – wiążące jest wyłącznie brzmienie ustawy.
+        </p>
+
+        <h2>Piszemy prostym językiem</h2>
+        <p>{PLAIN_LANGUAGE_READER}</p>
+        <p>Dlatego każde streszczenie – i każde polecenie dla AI – trzyma się tych zasad:</p>
+        <ul>
+          {PLAIN_LANGUAGE_RULES.map((rule) => (
+            <li key={rule}>{rule}</li>
+          ))}
+        </ul>
+        <p>
+          Upraszczamy słowa, a nie fakty: ważne warunki i wyjątki zostają w streszczeniu, tylko opisane zwyczajnie.
         </p>
 
         <h2>Co oznaczają statusy</h2>

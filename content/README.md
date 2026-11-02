@@ -34,6 +34,12 @@ Pola uzupełniane przez AI (`scripts/summarize-bills.ts`):
 | `decisionSummary` | 2–3 zdania o powodach weta |
 | `ai` | model, data wygenerowania i klucze dokumentów źródłowych (`sourceKey`, `decisionKey`) |
 
+## Prosty język
+
+Wszystkie teksty (pola AI i treść) piszemy bardzo prostym językiem, zrozumiałym dla przeciętnego obywatela bez
+wykształcenia prawniczego. Zasady są zapisane w jednym miejscu – [`src/lib/plain-language.ts`](../src/lib/plain-language.ts):
+korzysta z nich polecenie dla AI i strona „Jak to działa”. Przy ręcznych poprawkach trzymaj się tych samych zasad.
+
 ## Treść (Markdown)
 
 Sekcje `## Streszczenie`, `## Najważniejsze zmiany`, `## Kogo dotyczy`, `## Wejście w życie`, `## Ocena zmian`
